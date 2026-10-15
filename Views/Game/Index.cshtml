@@ -1,0 +1,107 @@
+@model CodebreakerGame.Models.GameViewModel
+@{
+    ViewData["Title"] = "Codebreaker";
+}
+
+<style>
+    :root { color-scheme: dark; }
+    body {
+        background: radial-gradient(circle at top, #202b52, #0c1020 70%);
+        color: #f4f6ff;
+        font-family: system-ui, sans-serif;
+        min-height: 100vh;
+    }
+    .game {
+        max-width: 680px; margin: 36px auto; padding: 30px;
+        background: rgba(28, 35, 64, .96); border: 1px solid #3a4674;
+        border-radius: 22px; text-align: center;
+        box-shadow: 0 18px 60px #0007;
+    }
+    .eyebrow { color: #a9a2ff; letter-spacing: .18em; font-size: .8rem; }
+    .game h1 { margin: 8px 0; font-size: clamp(2rem, 6vw, 3.1rem); }
+    .subtitle { color: #c3c9e5; }
+    .panel { background: #11182d; padding: 16px; margin-top: 20px; border-radius: 14px; }
+    .stats { display: flex; justify-content: center; gap: 32px; flex-wrap: wrap; }
+    .stat strong { display: block; font-size: 1.5rem; color: #b9b2ff; }
+    .code-input {
+        width: 190px; box-sizing: border-box; padding: 12px;
+        font-size: 28px; text-align: center; letter-spacing: 8px;
+        border-radius: 10px; border: 2px solid #8b83ff;
+        background: #0b1022; color: white;
+    }
+    .play-btn {
+        padding: 12px 24px; border: 0; border-radius: 10px;
+        background: #7c6cff; color: white; font-weight: 700;
+        cursor: pointer; transition: transform .15s, background .15s;
+    }
+    .play-btn:hover { background: #968aff; transform: translateY(-1px); }
+    .message { color: #c9c2ff; margin: 20px 0; font-weight: 600; }
+    .history { width: 100%; margin-top: 12px; border-collapse: collapse; }
+    .history th, .history td { padding: 11px 8px; border-bottom: 1px solid #343b5c; }
+    .history th { color: #b9b2ff; }
+    .hint { color: #aeb8d9; font-size: .9rem; }
+    .validation { color: #ffb4b4; display: block; margin-top: 8px; }
+    @@media (max-width: 600px) { .game { margin: 14px; padding: 20px 14px; } }
+</style>
+
+<main class="game">
+    <div class="eyebrow">A MINI LOGIC CHALLENGE</div>
+    <h1>🔐 CODEBREAKER</h1>
+    <p class="subtitle">Crack the 4-digit secret. Think carefully—every guess counts.</p>
+
+    <div class="panel stats">
+        <div class="stat"><strong>@Model.AttemptsLeft / @Model.MaxAttempts</strong><span>Attempts left</span></div>
+        <div class="stat"><strong>🏆 @Model.Score</strong><span>Your score</span></div>
+    </div>
+
+    <p class="hint">Use four different digits from 0 to 9. Leading zeroes are allowed.</p>
+    <p class="message" role="status">@Model.Message</p>
+
+    @if (!Model.IsGameOver)
+    {
+        <form asp-controller="Game" asp-action="Guess" method="post">
+            @Html.AntiForgeryToken()
+            <label class="visually-hidden" asp-for="Guess">Your four-digit guess</label>
+            <input asp-for="Guess" class="code-input" type="text"
+                   inputmode="numeric" pattern="[0-9]{4}" maxlength="4"
+                   placeholder="0000" autocomplete="off" required />
+            <span asp-validation-for="Guess" class="validation"></span>
+            <br /><br />
+            <button class="play-btn" type="submit">Crack Code 🚀</button>
+        </form>
+    }
+    else if (Model.IsWon)
+    {
+        <h2>🎉 YOU WIN!</h2>
+        <p>Brilliant deduction. Can you beat your score?</p>
+    }
+    else
+    {
+        <h2>😈 Better luck next time!</h2>
+    }
+
+    @if (Model.History.Count > 0)
+    {
+        <section class="panel">
+            <h3>📜 Guess History</h3>
+            <table class="history">
+                <thead><tr><th>Guess</th><th>Exact</th><th>Misplaced</th></tr></thead>
+                <tbody>
+                @foreach (var item in Model.History)
+                {
+                    <tr>
+                        <td><strong>@item.Guess</strong></td>
+                        <td>@item.ExactMatches</td>
+                        <td>@item.MisplacedMatches</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </section>
+    }
+
+    <form asp-controller="Game" asp-action="Restart" method="post" style="margin-top:20px">
+        @Html.AntiForgeryToken()
+        <button class="play-btn" type="submit">🔄 New Game</button>
+    </form>
+</main>
